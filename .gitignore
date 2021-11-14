@@ -1,0 +1,14 @@
+*
+!*/
+
+!.github/**/*.yml
+!.gitignore
+!.dockerignore
+!README.md
+!LICENSE
+
+!go.mod
+!go.sum
+!*.go
+
+!Dockerfile
