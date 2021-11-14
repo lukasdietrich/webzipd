@@ -12,7 +12,8 @@ import (
 
 type Reader struct {
 	io.ReadCloser
-	Modtime time.Time
+	Filename string
+	Modtime  time.Time
 }
 
 type Namespace struct {
@@ -72,7 +73,7 @@ func (n *Namespace) Open(filename string) (*Reader, error) {
 	filename = strings.TrimLeft(filename, "/")
 
 	file, ok := n.contentMap[filename]
-	if !ok {
+	if !ok || file.Mode().IsDir() {
 		if !strings.HasSuffix(filename, "index.html") {
 			return n.Open(path.Join(filename, "index.html"))
 		}
@@ -81,5 +82,5 @@ func (n *Namespace) Open(filename string) (*Reader, error) {
 	}
 
 	r, err := file.Open()
-	return &Reader{ReadCloser: r, Modtime: file.Modified}, err
+	return &Reader{ReadCloser: r, Filename: filename, Modtime: file.Modified}, err
 }

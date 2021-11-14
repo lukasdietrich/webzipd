@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"mime"
@@ -32,16 +33,27 @@ func (r *Renderer) Render(hw http.ResponseWriter, hr *http.Request, namespace st
 		}
 	} else {
 		writeModTime(hw, reader.Modtime)
-		writeContentType(hw, filename)
+		contentReader := writeContentType(hw, reader)
 
-		io.Copy(hw, reader)
+		io.Copy(hw, contentReader)
 		reader.Close()
 	}
 }
 
-func writeContentType(hw http.ResponseWriter, filename string) {
-	contentType := mime.TypeByExtension(filepath.Ext(filename))
+func writeContentType(hw http.ResponseWriter, reader *namespace.Reader) io.Reader {
+	contentReader := io.Reader(reader)
+	contentType := mime.TypeByExtension(filepath.Ext(reader.Filename))
+
+	if contentType == "" {
+		guessBuffer := make([]byte, 512)
+		n, _ := io.ReadFull(reader, guessBuffer)
+		contentType = http.DetectContentType(guessBuffer[:n])
+		contentReader = io.MultiReader(bytes.NewReader(guessBuffer[:n]), contentReader)
+	}
+
 	hw.Header().Set("Content-Type", contentType)
+
+	return contentReader
 }
 
 func writeModTime(hw http.ResponseWriter, modtime time.Time) {
