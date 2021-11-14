@@ -2,6 +2,7 @@ package namespace
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,6 +44,8 @@ func (i *Index) load() error {
 
 	for _, info := range infoSlice {
 		if name := info.Name(); !info.IsDir() && strings.HasSuffix(name, ".zip") {
+			log.Printf("load namespace %q", name)
+
 			filename := filepath.Join(i.foldername, name)
 			namespace, err := openNamespace(filename)
 			if err != nil {
