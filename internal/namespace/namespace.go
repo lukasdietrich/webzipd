@@ -3,6 +3,7 @@ package namespace
 import (
 	"archive/zip"
 	"io"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -42,9 +43,13 @@ func (n *Namespace) load() error {
 		return err
 	}
 
-	if !info.ModTime().After(n.modtime) {
+	modtime := info.ModTime()
+
+	if !modtime.After(n.modtime) {
 		return nil
 	}
+
+	log.Printf("%q last modified at %q. reloading zip.", n.filename, modtime.Format(time.RFC3339))
 
 	if n.zip != nil {
 		if err := n.zip.Close(); err != nil {
@@ -57,7 +62,9 @@ func (n *Namespace) load() error {
 		return err
 	}
 
+	n.modtime = modtime
 	n.contentMap = make(map[string]*zip.File, len(n.zip.File))
+
 	for _, file := range n.zip.File {
 		n.contentMap[file.Name] = file
 	}
